@@ -198,6 +198,32 @@ ADMIN_API_KEY=your-long-admin-key
 
 ---
 
+## Security middleware (optional)
+
+The server can run [fastapi-guard](https://github.com/Guard-Core/fastapi-guard) in front of every route. It is off by default: when `MEM0_SECURITY_ENABLED` is not `true`, nothing is imported and no middleware is added. It covers what the built-in `slowapi` limiter does not: automatic per-IP bans after repeated attack attempts, IP allow and block lists (IPs and CIDRs), trusted-proxy client-IP resolution, and screening of the path, query string and headers for attack patterns.
+
+Install the package (it is listed in `server/requirements.txt`, so the Docker image already has it), then set the variables in `.env`:
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `MEM0_SECURITY_ENABLED` | `false` | Turns the middleware on. Enabling it without `fastapi-guard` installed fails at startup with a clear error. |
+| `MEM0_SECURITY_TRUSTED_PROXIES` | `127.0.0.1,::1` | Comma-separated IPs or CIDRs allowed to set `X-Forwarded-For`. The header from any other peer is ignored. Set this to your reverse proxy or ingress address when you run behind one. |
+| `MEM0_SECURITY_ALLOWED_IPS` | empty | When set, only these IPs or CIDRs may reach the server. Everyone else gets `403`. |
+| `MEM0_SECURITY_BLOCKED_IPS` | empty | IPs or CIDRs that always get `403`. |
+| `MEM0_SECURITY_AUTO_BAN_THRESHOLD` | `5` | Attack attempts from one IP before it is banned. |
+| `MEM0_SECURITY_AUTO_BAN_DURATION` | `3600` | Ban length in seconds. |
+| `MEM0_SECURITY_SCAN_BODY` | `false` | Also scan JSON request bodies. Off by default because memories, messages and prompts are free text and can legitimately contain markup or SQL. |
+
+How it fits with the existing pieces:
+
+- **Rate limiting stays with `slowapi`.** The guard's own rate limiter is disabled, so `slowapi` still returns its `429` responses unchanged and a request is never counted twice. Rate-limit rejections do not count toward auto bans.
+- **Client IP.** The guard resolves the client IP from `X-Forwarded-For` only for trusted proxies. `slowapi` keeps using the socket peer address, so behind a proxy it still sees the proxy's address.
+- **Middleware order.** CORS stays outermost, so the dashboard receives CORS headers on guard `403` responses too. The guard is a pure ASGI middleware, so streaming responses are not buffered.
+- **Allow list and loopback.** IPs on `MEM0_SECURITY_ALLOWED_IPS` skip attack screening, and loopback addresses are never auto-banned.
+- **State is in memory.** Bans are kept per process and reset on restart. With several workers each one tracks its own bans.
+
+---
+
 ## See it in action
 
 ### Create and search memories via HTTP

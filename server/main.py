@@ -27,6 +27,7 @@ from routers import auth as auth_router
 from routers import entities as entities_router
 from routers import requests as requests_router
 from schemas import MessageResponse
+from security import install_security
 from server_state import (
     get_current_config,
     get_memory_instance,
@@ -158,6 +159,8 @@ app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.add_exception_handler(UpstreamError, upstream_error_handler)
 DASHBOARD_URL = os.environ.get("DASHBOARD_URL", "http://localhost:3000")
+# Added before CORS so CORS stays the outermost middleware (add_middleware prepends).
+install_security(app)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[DASHBOARD_URL],
