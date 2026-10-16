@@ -83,6 +83,17 @@ def test_attack_in_query_is_blocked():
     assert _client({}).get("/ping", params=ATTACK).status_code == 400
 
 
+@pytest.mark.parametrize(
+    "referer", ["http://localhost:3000/", "http://127.0.0.1:3000/", "http://192.168.1.20:3000/"]
+)
+def test_localhost_and_lan_referers_are_not_blocked(referer):
+    assert _client({}).get("/ping", headers={"Referer": referer}).status_code == 200
+
+
+def test_attack_in_referer_is_still_blocked():
+    assert _client({}).get("/ping", headers={"Referer": ATTACK["q"]}).status_code == 400
+
+
 def test_ip_is_banned_after_repeated_attacks():
     client = _client({"MEM0_SECURITY_AUTO_BAN_THRESHOLD": "3"})
     for _ in range(5):

@@ -20,6 +20,7 @@ def _csv(env: Mapping[str, str], name: str) -> list[str]:
 def build_config(env: Mapping[str, str]) -> Any:
     try:
         from guard import SecurityConfig
+        from guard_core.handlers.suspatterns_handler import ALL_DETECTION_CATEGORIES
     except ImportError as exc:
         raise RuntimeError(
             "MEM0_SECURITY_ENABLED is true but fastapi-guard is not installed. "
@@ -35,6 +36,8 @@ def build_config(env: Mapping[str, str]) -> Any:
         auto_ban_duration=int(env.get("MEM0_SECURITY_AUTO_BAN_DURATION", "3600")),
         # Memories, messages and prompts are free text, so bodies are not scanned by default.
         detection_scan_body=env.get("MEM0_SECURITY_SCAN_BODY", "").lower() in _TRUE,
+        # Browsers send the page address as Referer, and guard-core 4.4.0 flags localhost and LAN addresses in it as ssrf.
+        enabled_detection_categories=frozenset(ALL_DETECTION_CATEGORIES) - {"ssrf"},
         # slowapi owns rate limiting; keep the guard to bans, IP policy and screening.
         enable_rate_limiting=False,
         security_headers=None,

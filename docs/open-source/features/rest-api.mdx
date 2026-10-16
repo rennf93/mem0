@@ -200,7 +200,7 @@ ADMIN_API_KEY=your-long-admin-key
 
 ## Security middleware (optional)
 
-The server can run [fastapi-guard](https://github.com/Guard-Core/fastapi-guard) in front of every route. It is off by default: when `MEM0_SECURITY_ENABLED` is not `true`, nothing is imported and no middleware is added. It covers what the built-in `slowapi` limiter does not: automatic per-IP bans after repeated attack attempts, IP allow and block lists (IPs and CIDRs), trusted-proxy client-IP resolution, and screening of the path, query string and headers for attack patterns.
+The server can run [fastapi-guard](https://github.com/Guard-Core/fastapi-guard) in front of every route. It is off by default: when `MEM0_SECURITY_ENABLED` is not `true`, nothing is imported and no middleware is added. It covers what the built-in `slowapi` limiter does not: automatic per-IP bans after repeated attack attempts, IP allow and block lists (IPs and CIDRs), trusted-proxy client-IP resolution, and screening of the path, query string and headers for attack patterns (every detection category except `ssrf`, because browsers send the page address as `Referer` and guard-core 4.4.0 flags localhost and LAN addresses in it).
 
 Install the package (it is listed in `server/requirements.txt`, so the Docker image already has it), then set the variables in `.env`:
 
