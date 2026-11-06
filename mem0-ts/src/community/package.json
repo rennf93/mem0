@@ -78,9 +78,9 @@
     "@langchain/community": "^1.1.18",
     "@langchain/core": "^1.1.27",
     "axios": "^1.16.0",
-    "mem0ai": "^2.1.8",
+    "mem0ai": "^3.3.1",
     "uuid": "^11.1.1",
-    "zod": "3.22.4"
+    "zod": "4.6.6"
   },
   "engines": {
     "node": ">=18"
